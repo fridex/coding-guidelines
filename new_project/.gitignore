@@ -1,0 +1,10 @@
+*.pyc
+docs/
+venv/
+venv-coala/
+__pycache__
+build
+*.egg-info
+dist
+docs.source/api
+*.py.orig

@@ -1,0 +1,99 @@
+= Coding guidelines for fabric8-analytics
+
+Best practices and coding guidelines for fabric8-analytics. These guidelines are *not a must* but rather *collection of suggestions* for best practices across whole team and project. By respecting these guidelines you make your code more readable, maintainable and all team members can faster dive into the source code as there is intention to make core parts as generic as possible.
+
+== General recommendations
+
+=== What Python version should I use?
+
+Do *NOT* use Python in version 2. Write your code directly in Python3 from the beginning! There is no need to maintain backwards compatibility for Python 2
+
+=== Do not use print for logging related reports
+
+Do not use prints. They do not report severity of error and it is not possible to adjust verbosity for applications - use logger instead. You can use Python's default `logging` facilities, but you can also explore link:https://julien.danjou.info/blog/python-logging-easy-with-daiquiri[daiquiri] library that makes logging with Python even more awesome. It was developed at Red Hat by OpenStack team.
+
+
+```python
+import logging
+
+_logger = logging.getLogger(__name__)
+
+_logger.debug("Only debug messages intended for developers when debugging code.")
+_logger.info("Informative messages like information about progress or application's execution flow reports.")
+_logger.warning("Something went wrong but it is not fatal to the application execution. User should definitely know about that.")
+_logger.error("Some error report.")
+_logger.exception("There was some exception, exception will be logged as well.")
+```
+
+TIP: Make sure you log on suitable level so we can just turn off logs if necessary. Also make your log messages as descriptive as possible - one day it will save even your time when you will be tracing/debugging some issue.
+
+=== Conform to PEP8 standards
+
+Please configure your development environment to conform Python's PEP8 standard - link:https://www.python.org/dev/peps/pep-0008/[Style Guide for Python code].
+
+=== Make sure your code is accepted by linters
+
+Python is interpreted programming language. Your code might work under some circumstances, but you might not reach to all parts of your application or you might just miss something.
+
+To minimize errors in your project, use Python linters such as link:https://www.pylint.org/[pylint] or link:https://coala.io/[Coala bears] (a set of useful linters not only for Python). They also report some security related errors as well. In general, it is a good idea to run these linters in CI before merging changes to the master branch.
+
+If you are using the `new_project` template present in this repo, feel free to directly issue `make check` in order to run linters. If your application was not created from the `new_project` template, feel free to explore configuration of linters the template.
+
+=== Keep source code base as minimal as possible
+
+Remove any code that is not used and not executed. This will help with source code size reduction and with maintaining project. It's hard to find important thing in junks.
+
+=== Documentation and README files
+
+Use AsciiDoc as formatting for all textual files that go to repo. Here is a nice link:https://powerman.name/doc/asciidoc[cheat sheet].
+
+=== Other recommendations
+
+Feel free to browse guidelines that are used across different teams at Red Hat. link:https://github.com/leapp-to/guidelines/blob/master/python.md[Here are another guidelines] for LeApp project (mostly coding style related).
+
+=== Documentation strings (docstrings)
+
+As project is getting bigger and bigger, it is necessary to document behaviour. In general it is a good practise to document **at least** public methods - their input and their output. As Python is dynamically typed langege, it also a good idea to document data types that are accepted in methods/functions and data types that are produced by methods/functions.
+
+Most of the core code already uses default link:http://www.sphinx-doc.org/en/stable/[Sphinx] style documentation based on reStructuredText (reST). Please continue using it. If you would like to explore available data structures, methods and functions, feel free to automatically generate API documentation.
+
+=== Testing
+
+Use link:https://docs.pytest.org/[pytest] framework for writing tests. If you would like to introduce behavioural tests, feel free to use link:http://pythonhosted.org/behave/[behave].
+
+== Designing an API
+
+=== Choosing a web server
+
+Feel free to use a web server based on your preferences and requirements. Recommended web servers are:
+
+ * link:http://gunicorn.org/[gunicorn]
+ * link:https://uwsgi-docs.readthedocs.io/[uwsgi]
+
+=== Security
+
+If you are designing an external API (API that is reachable from outiside OpenShift cluster), please make sure you follow link:https://github.com/shieldfy/API-Security-Checklist[API security checklist].
+
+Mostly we use OAuth with GitHub so all developers can access API endpoints if necessary. The main API server however uses link:https://jwt.io/[JWT].
+
+=== API versioning
+
+In general it is good idea to make changes on API backwards compatible. This prevents consumers to break their applications. If it is not possible to make backwards compatible changes, consider introducing a new API version.
+
+=== OpenAPI/Swagger
+
+Please use OpenAPI/Swagger specification for technical documentation of API endpoints. Use existing libraries such as link:https://github.com/zalando/connexion[Connexion]. You can get an inspiration from existing API that use OpenAPI, such as link:https://github.com/fabric8-analytics/fabric8-analytics-jobs[jobs service].
+
+This also applies to internal APIs. OpenAPI/Swagger makes it easier to others to explore and directly use API.
+
+== Designing a CLI tool or library
+
+==== Parsing CLI arguments
+
+You can use standard Python's link:https://docs.python.org/3/howto/argparse.html[argparse] module in order to parse CLI arguments. However feel free to use link:http://click.pocoo.org/5/[click] to make your life easier (also in many cases `click` makes your source code more readable as you write less).
+
+==== Code organization
+
+Even if you develop a library, it might be useful to introduce very a thin CLI client that would just parse arguments passed from CLI and execute desired methods/functions available inside package. This allows you to easily test your application just from command line.
+
+Move as much as possible to library itself. Do not introduce code logic inside the main CLI executable. This will allow you to reuse code from within other applications by importing it.

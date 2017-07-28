@@ -1,0 +1,5 @@
+pylint
+coala-bears
+pydocstyle
+pip-tools
+sphinx
